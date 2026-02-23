@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>心光恩望學校 - 智能行政系統</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* ==================== */
+        /* 1. 核心樣式 (維持不變) */
+        /* ==================== */
+        :root {
+            --primary-blue: #003366; --accent-teal: #008080; 
+            --light-bg: #f0f4f8; --white: #ffffff;
+            --status-done: #2ecc71; --status-progress: #f1c40f; 
+            --status-pending: #e74c3c; --status-delayed: #ff4d4d;
+            --sidebar-width: 280px;
+        }
+
+        body { font-family: "Segoe UI", "Microsoft JhengHei", sans-serif; margin: 0; display: flex; height: 100vh; background-color: var(--light-bg); color: #333; }
+
+        /* Sidebar */
+        .sidebar { width: var(--sidebar-width); background: linear-gradient(180deg, var(--primary-blue) 0%, #002244 100%); color: white; display: flex; flex-direction: column; overflow-y: auto; }
+        .sidebar-brand { padding: 25px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); font-weight: bold; font-size: 1.2rem; }
+        .nav-item { padding: 12px 25px; cursor: pointer; transition: 0.3s; border-left: 4px solid transparent; display: flex; align-items: center; gap: 10px; color: rgba(255,255,255,0.8); }
+        .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.1); border-left-color: var(--accent-teal); color: white; }
+        .nav-group-title { padding: 15px 25px 5px; font-size: 0.75rem; color: rgba(255,255,255,0.5); text-transform: uppercase; font-weight: bold; }
+
+        /* Main Content */
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .top-header { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .search-box { position: relative; width: 350px; }
+        .search-box input { width: 100%; padding: 10px 40px 10px 15px; border: 1px solid #ddd; border-radius: 20px; outline: none; background: #f9f9f9; }
+        .search-box i { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #999; cursor: pointer; }
+
+        .content-body { padding: 30px; overflow-y: auto; flex: 1; }
+
+        /* ==================== */
+        /* 2. Dashboard 樣式 (維持 ADM18) */
+        /* ==================== */
+        .dashboard-stats { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .progress-track { width: 300px; height: 12px; background: #eee; border-radius: 6px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--status-done); width: 0%; transition: 1s ease; }
+        
+        .quarter-card { background: var(--white); border-radius: 12px; margin-bottom: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-top: 5px solid var(--primary-blue); overflow: hidden; }
+        .quarter-header { background: #f8fafc; padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 10px; }
+        .quarter-header h3 { margin: 0; color: var(--primary-blue); }
+
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f8fafc; padding: 15px; text-align: left; color: #666; font-weight: 600; border-bottom: 2px solid #eee; }
+        td { padding: 15px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+        
+        .cat-tag { display: inline-block; padding: 4px 10px; border-radius: 4px; background: #eef2f7; color: var(--primary-blue); font-size: 0.85rem; font-weight: 600; }
+        .status-select { padding: 6px 10px; border-radius: 20px; border: 1px solid #ddd; font-weight: bold; cursor: pointer; background: white; font-size: 0.85rem; }
+
+        /* ★ 新增：12個月微型進度條樣式 ★ */
+        .mini-month-track { display: flex; gap: 3px; }
+        .mini-month-box { width: 12px; height: 12px; background: #eee; border-radius: 2px; cursor: help; font-size: 8px; text-align: center; line-height: 12px; color: transparent;}
+        .mini-month-box:hover { transform: scale(1.2); }
+        .mm-done { background: var(--status-done); }
+        .mm-prog { background: var(--status-progress); }
+        .mm-none { background: #e0e0e0; }
+
+        /* ==================== */
+        /* 3. 小組資料卡片樣式 */
+        /* ==================== */
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 20px; }
+        .group-card { background: white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 4px solid var(--accent-teal); position: relative; }
+        .member-tag { display: inline-block; background: #f0f4f8; padding: 4px 10px; border-radius: 15px; font-size: 0.85rem; margin: 3px; cursor: pointer; color: #555; border: 1px solid #e2e8f0; transition:0.2s; }
+        .member-tag:hover { background: var(--primary-blue); color: white; border-color: var(--primary-blue); }
+
+        /* Modal Styles */
+        .modal { display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5); backdrop-filter: blur(2px); }
+        .modal-content { background:white; margin: 5% auto; width: 650px; max-width:90%; border-radius:12px; overflow: hidden; display: flex; flex-direction: column; max-height: 90vh; }
+        .modal-header { padding: 20px; background: var(--primary-blue); color: white; display: flex; justify-content: space-between; align-items: center; }
+        .modal-body { padding: 25px; overflow-y: auto; }
+        
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        
+        /* 12個月編輯網格 */
+        .month-edit-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-top: 10px; }
+        .month-check-item { text-align: center; border: 1px solid #eee; padding: 5px; border-radius: 5px; background:white; }
+        .month-check-item select { width: 100%; margin-top: 5px; font-size: 0.8rem; border:1px solid #ddd; padding:2px; }
+
+        .btn-save { background: var(--accent-teal); color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; width: 100%; font-size: 1rem; margin-top:10px; }
+        .btn-add { background-color: var(--accent-teal); color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+    </style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <div class="sidebar-brand">ENHS Admin</div>
+    <div class="nav-item active" onclick="showSection('dashboard', this)"><i class="fas fa-chart-line" style="margin-right:10px"></i> 恆常工作儀表板</div>
+    
+    <div class="nav-group-title">行政架構</div>
+    <div class="nav-item" onclick="showSection('admin', this)"><i class="fas fa-university" style="margin-right:10px"></i> 校政與行政</div>
+    <div class="nav-item" onclick="showSection('academic', this)"><i class="fas fa-book-reader" style="margin-right:10px"></i> 學與教組</div>
+    <div class="nav-item" onclick="showSection('support', this)"><i class="fas fa-hands-helping" style="margin-right:10px"></i> 學生支援組</div>
+    <div class="nav-item" onclick="showSection('mgmt_prof', this)"><i class="fas fa-user-graduate" style="margin-right:10px"></i> 專業發展</div>
+    <div class="nav-item" onclick="showSection('mgmt_admin', this)"><i class="fas fa-file-invoice-dollar" style="margin-right:10px"></i> 校務與財務</div>
+    <div class="nav-item" onclick="showSection('community', this)"><i class="fas fa-users" style="margin-right:10px"></i> 家校社區</div>
+    <div class="nav-item" onclick="showSection('rehab', this)"><i class="fas fa-heartbeat" style="margin-right:10px"></i> 復康與宿舍</div>
+</nav>
+
+<div class="main-content">
+    <header class="top-header">
+        <h2 id="page-title" style="color:var(--primary-blue); margin:0;">恆常工作儀表板</h2>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="搜尋老師姓名 (例如: 陳大文)..." onkeypress="handleSearch(event)">
+            <i class="fas fa-search" onclick="executeSearch()"></i>
+        </div>
+    </header>
+
+    <div class="content-body" id="content-area">
+        <div style="text-align:center; margin-top:50px; color:#666;">
+            <i class="fas fa-spinner fa-spin fa-2x"></i><br>資料載入中...
+        </div>
+    </div>
+</div>
+
+<div id="staffModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 style="margin:0"><i class="fas fa-id-card"></i> 職員履歷檔案</h3>
+            <span onclick="closeModal('staffModal')" style="cursor:pointer; font-size:1.5rem;">&times;</span>
+        </div>
+        <div class="modal-body">
+            <h2 id="staffNameDisplay" style="color:var(--primary-blue); border-bottom:2px solid #eee; padding-bottom:10px; margin-top:0;"></h2>
+            <div style="margin-top:20px;">
+                <h4 style="color: #666; margin-bottom:15px;">所屬組別與職務：</h4>
+                <div id="staffRolesList"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="editTaskModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="taskModalTitle" style="margin:0">編輯工作任務 & 進度</h3>
+            <span onclick="closeModal('editTaskModal')" style="cursor:pointer; font-size:1.5rem;">&times;</span>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="editType"> <input type="hidden" id="editIndex">
+            
+            <div class="form-group">
+                <label>季度分類 (例如: 9-10月, 第一季)</label>
+                <input type="text" id="tQuarter">
+            </div>
+            <div class="form-group">
+                <label>範疇</label>
+                <input type="text" id="tCat">
+            </div>
+            <div class="form-group">
+                <label>任務內容</label>
+                <input type="text" id="tTask">
+            </div>
+            <div class="form-group">
+                <label>負責人</label>
+                <input type="text" id="tPic">
+            </div>
+
+            <div class="form-group" style="background:#f4f7f9; padding:15px; border-radius:8px; border:1px solid #e0e0e0;">
+                <label style="color:var(--accent-teal); display:flex; justify-content:space-between;">
+                    <span>📅 每月進度更新 (Sheet J-U欄)</span>
+                    <span style="font-size:0.8rem; font-weight:normal; color:#666;">更改後請按儲存</span>
+                </label>
+                <div class="month-edit-grid" id="monthEditor">
+                    </div>
+            </div>
+
+            <button type="button" class="btn-save" onclick="saveTask()">儲存變更</button>
+        </div>
+    </div>
+</div>
+
+<div id="editGroupModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 style="margin:0">編輯小組資料</h3>
+            <span onclick="closeModal('editGroupModal')" style="cursor:pointer">&times;</span>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="editGroupIndex">
+            <div class="form-group">
+                <label>小組名稱</label>
+                <input type="text" id="gName">
+            </div>
+            <div class="form-group">
+                <label>主席 / 負責人</label>
+                <input type="text" id="gLeader">
+            </div>
+            <div class="form-group">
+                <label>組員名單 (請用逗號分隔)</label>
+                <textarea id="gMembers" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+                <label>主要職務</label>
+                <textarea id="gDuties" rows="4"></textarea>
+            </div>
+            <button type="button" class="btn-save" onclick="saveGroupData()">儲存變更</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ★ 請換成你的 Google Apps Script 網址 ★
+    const API_URL = "https://script.google.com/macros/s/AKfycbzg8AHKGJPLAgldDSfgwwAhT3k_0dOXnb5-tIzDSQel0QxauKltPGcIiXq534xUcFC5kA/exec"; 
+
+    let allTasks = [];
+    let allGroups = [];
+    let currentCategory = 'dashboard';
+
+    window.onload = loadData;
+
+    // 1. 讀取資料
+    function loadData() {
+        console.log("讀取中...");
+        fetch(API_URL)
+        .then(res => res.json())
+        .then(data => {
+            allTasks = data.tasks;
+            allGroups = data.groups;
+            // 重新渲染當前頁面
+            const activeBtn = document.querySelector('.nav-item.active');
+            if(activeBtn) showSection(currentCategory, activeBtn);
+        })
+        .catch(err => {
+            document.getElementById('content-area').innerHTML = "<p style='text-align:center'>無法連接資料庫</p>";
+        });
+    }
+
+    // 2. 切換頁面 (Dashboard 或 小組)
+    function showSection(cat, btn) {
+        currentCategory = cat;
+        // 更新選單樣式
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('page-title').innerText = btn.innerText;
+
+        const container = document.getElementById('content-area');
+        container.innerHTML = '';
+
+        if (cat === 'dashboard') {
+            renderDashboard(container);
+        } else {
+            renderGroups(container, cat);
+        }
+    }
+
+    // 3. 渲染 Dashboard (含季度、12個月進度)
+    function renderDashboard(container) {
+        // 計算總進度
+        const done = allTasks.filter(t => t.status === 'done').length;
+        const percent = allTasks.length ? Math.round((done / allTasks.length) * 100) : 0;
+
+        // 頂部進度條
+        let html = `
+            <div class="dashboard-stats">
+                <div>
+                    <h3 style="margin:0 0 5px 0; color:var(--primary-blue)">全校工作總進度</h3>
+                    <span style="color:#666;">完成率: <span style="font-weight:bold; color:var(--status-done); font-size:1.2rem;">${percent}%</span></span>
+                </div>
+                <div class="progress-track"><div class="progress-fill" style="width:${percent}%"></div></div>
+                <button class="btn-add" onclick="openAddTask()"><i class="fas fa-plus"></i> 新增任務</button>
+            </div>
+        `;
+
+        // 分組顯示 (依照 V 欄 "quarterCat")
+        const groups = {};
+        const order = ["9-10月", "11-12月", "1-2月", "3-4月", "5-6月", "7-8月", "第一季", "第二季", "第三季", "第四季", "恆常"];
+        
+        allTasks.forEach(t => {
+            let key = t.quarterCat || "其他";
+            if(!groups[key]) groups[key] = [];
+            groups[key].push(t);
+        });
+
+        // 排序 Key
+        const sortedKeys = Object.keys(groups).sort((a,b) => {
+            let idxA = order.indexOf(a); let idxB = order.indexOf(b);
+            if(idxA===-1) idxA=99; if(idxB===-1) idxB=99;
+            return idxA - idxB;
+        });
+
+        sortedKeys.forEach(key => {
+            const tasks = groups[key];
+            html += `
+                <div class="quarter-card">
+                    <div class="quarter-header">
+                        <h3><i class="far fa-calendar-alt"></i> ${key}</h3>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th width="10%">範疇</th>
+                                <th width="30%">任務內容</th>
+                                <th width="15%">負責人</th>
+                                <th width="20%">12個月進度</th> <th width="15%">整體狀態</th>
+                                <th width="10%">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            tasks.forEach(t => {
+                const idx = allTasks.indexOf(t);
+                
+                // ★ 生成 12 個小點點 (根據 J-U 欄數據) ★
+                let miniBar = '<div class="mini-month-track">';
+                if(t.monthly) {
+                    t.monthly.forEach((m, i) => {
+                        let cls = 'mm-none';
+                        let title = `${i+1}月: 未開始`;
+                        let val = String(m);
+                        if(val.includes('✅') || val.includes('正常')) { cls = 'mm-done'; title=`${i+1}月: 完成`; }
+                        else if(val.includes('🟡') || val.includes('進行')) { cls = 'mm-prog'; title=`${i+1}月: 進行中`; }
+                        miniBar += `<div class="mini-month-box ${cls}" title="${title}"></div>`;
+                    });
+                }
+                miniBar += '</div>';
+
+                html += `
+                    <tr>
+                        <td><span class="cat-tag">${t.cat}</span></td>
+                        <td>${t.task}</td>
+                        <td>${t.pic}</td>
+                        <td>${miniBar}</td> <td>
+                            <select class="status-select" onchange="updateMainStatus(${idx}, this.value)" style="color:${getStatusColor(t.status)}">
+                                <option value="done" ${t.status==='done'?'selected':''}>🟢 完成</option>
+                                <option value="progress" ${t.status==='progress'?'selected':''}>🟡 進行</option>
+                                <option value="pending" ${t.status==='pending'?'selected':''}>⚪ 未開始</option>
+                                <option value="delay" ${t.status==='delay'?'selected':''}>🔴 延遲</option>
+                            </select>
+                        </td>
+                        <td>
+                            <button onclick="openEditTask(${idx})" style="border:none; background:none; color:#3498db; cursor:pointer;"><i class="fas fa-edit"></i> 編輯</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            html += `</tbody></table></div>`;
+        });
+
+        container.innerHTML = html;
+    }
+
+    // 4. 渲染小組 (保留原本功能)
+    function renderGroups(container, category) {
+        const groups = allGroups.filter(g => g.category === category);
+        if (groups.length === 0) {
+            container.innerHTML = `<div style="text-align:center; color:#999; margin-top:50px;">暫無小組資料</div>`;
+            return;
+        }
+
+        container.innerHTML = `<div class="card-grid">
+            ${groups.map(g => `
+                <div class="group-card">
+                    <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">
+                        <h3 style="margin:0; color:var(--primary-blue); font-size:1.2rem;">${g.groupName}</h3>
+                        <button onclick="openEditGroup('${g.id}')" style="border:none; background:none; cursor:pointer; color:#999;"><i class="fas fa-pen"></i></button>
+                    </div>
+                    
+                    <div style="margin-bottom:12px;">
+                        <span style="color:var(--accent-teal); font-weight:bold;">負責人:</span> 
+                        <strong style="color:#333;">${g.leader}</strong>
+                    </div>
+
+                    <div style="margin-bottom:12px;">
+                        <div style="color:var(--accent-teal); font-weight:bold; margin-bottom:5px;">組員:</div>
+                        <div>${renderMembers(g.members)}</div>
+                    </div>
+
+                    ${g.duties ? `
+                    <div style="margin-top:15px; padding-top:15px; border-top:1px dashed #eee;">
+                        <div style="color:var(--accent-teal); font-weight:bold; margin-bottom:5px;">職務:</div>
+                        <div style="color:#555; font-size:0.9rem;">${g.duties}</div>
+                    </div>` : ''}
+                </div>
+            `).join('')}
+        </div>`;
+    }
+
+    // 5. 搜尋功能 (保留)
+    function handleSearch(e) { if (e.key === 'Enter') executeSearch(); }
+    function searchStaffByClick(name) {
+        document.getElementById('searchInput').value = name;
+        executeSearch();
+    }
+    function executeSearch() {
+        const query = document.getElementById('searchInput').value.trim();
+        if (!query) return;
+        const results = [];
+        allGroups.forEach(g => {
+            let role = '';
+            if (g.leader && g.leader.includes(query)) role = '主席 / 負責人';
+            else if (g.members && g.members.includes(query)) role = '組員';
+            if (role) results.push({ groupName: g.groupName, category: g.category, role: role });
+        });
+        openStaffModal(query, results);
+    }
+    function openStaffModal(name, results) {
+        document.getElementById('staffNameDisplay').innerText = name + " 的職務總覽";
+        const list = document.getElementById('staffRolesList');
+        if (results.length === 0) list.innerHTML = `<p style="color:#999;">未找到此人。</p>`;
+        else {
+            list.innerHTML = results.map(r => `
+                <div style="border-left:4px solid var(--accent-teal); background:#f0f8ff; padding:12px; margin-bottom:10px;">
+                    <strong>${r.groupName}</strong> <span style="font-size:0.8rem;">(${r.category})</span><br>
+                    <span style="color:#666;">${r.role}</span>
+                </div>
+            `).join('');
+        }
+        document.getElementById('staffModal').style.display = 'block';
+    }
+
+    // 6. 編輯/新增任務 (含12個月)
+    function openAddTask() {
+        document.getElementById('taskModalTitle').innerText = "新增工作任務";
+        document.getElementById('editType').value = "new_task";
+        document.getElementById('editIndex').value = "";
+        
+        document.getElementById('tQuarter').value = "恆常";
+        document.getElementById('tCat').value = "";
+        document.getElementById('tTask').value = "";
+        document.getElementById('tPic').value = "";
+
+        renderMonthEditor([]); // 空的12個月
+        document.getElementById('editTaskModal').style.display = 'block';
+    }
+
+    function openEditTask(idx) {
+        const t = allTasks[idx];
+        document.getElementById('taskModalTitle').innerText = "編輯工作任務";
+        document.getElementById('editType').value = "task";
+        document.getElementById('editIndex').value = idx;
+        
+        document.getElementById('tQuarter').value = t.quarterCat;
+        document.getElementById('tCat').value = t.cat;
+        document.getElementById('tTask').value = t.task;
+        document.getElementById('tPic').value = t.pic;
+
+        // ★ 生成 12 個月的編輯選單，並填入當前值 ★
+        renderMonthEditor(t.monthly || []);
+        document.getElementById('editTaskModal').style.display = 'block';
+    }
+
+    function renderMonthEditor(monthlyData) {
+        const container = document.getElementById('monthEditor');
+        container.innerHTML = '';
+        const months = ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
+        
+        months.forEach((m, i) => {
+            let currentVal = monthlyData[i] ? String(monthlyData[i]) : "";
+            let selDone = (currentVal.includes('✅') || currentVal.includes('正常')) ? 'selected' : '';
+            let selProg = (currentVal.includes('🟡') || currentVal.includes('進行')) ? 'selected' : '';
+            let selNone = (!selDone && !selProg) ? 'selected' : '';
+
+            container.innerHTML += `
+                <div class="month-check-item">
+                    <div style="font-size:0.7rem; color:#666;">${m}</div>
+                    <select id="m_select_${i}">
+                        <option value="" ${selNone}>-</option>
+                        <option value="🟡 進行中" ${selProg}>進行</option>
+                        <option value="✅ 正常" ${selDone}>完成</option>
+                    </select>
+                </div>
+            `;
+        });
+    }
+
+    function saveTask() {
+        const type = document.getElementById('editType').value;
+        const idx = document.getElementById('editIndex').value;
+        
+        // 收集 12 個月的新狀態
+        const newMonthly = [];
+        for(let i=0; i<12; i++) {
+            newMonthly.push(document.getElementById(`m_select_${i}`).value);
+        }
+
+        const payload = {
+            type: 'task',
+            action: (type === 'new_task') ? 'create' : 'update',
+            rowIndex: (type === 'task') ? allTasks[idx].rowIndex : null,
+            quarterCat: document.getElementById('tQuarter').value,
+            cat: document.getElementById('tCat').value,
+            task: document.getElementById('tTask').value,
+            pic: document.getElementById('tPic').value,
+            monthly: newMonthly // ★ 傳送陣列給後端
+        };
+
+        const btn = document.querySelector('#editTaskModal .btn-save');
+        btn.innerText = "儲存中..."; btn.disabled = true;
+
+        fetch(API_URL, {
+            method: 'POST', mode: 'no-cors', 
+            headers: {'Content-Type': 'text/plain'},
+            body: JSON.stringify(payload)
+        }).then(() => {
+            alert("更新成功！");
+            closeModal('editTaskModal');
+            loadData();
+            btn.innerText = "儲存變更"; btn.disabled = false;
+        });
+    }
+
+    // 7. 編輯小組 (保留)
+    function openEditGroup(gid) {
+        const g = allGroups.find(x => x.id == gid);
+        if(!g) return;
+        document.getElementById('editGroupIndex').value = g.rowIndex;
+        document.getElementById('gName').value = g.groupName;
+        document.getElementById('gLeader').value = g.leader;
+        document.getElementById('gMembers').value = g.members;
+        document.getElementById('gDuties').value = g.duties;
+        document.getElementById('editGroupModal').style.display = 'block';
+    }
+
+    function saveGroupData() {
+        const payload = {
+            type: 'group',
+            action: 'update',
+            rowIndex: document.getElementById('editGroupIndex').value,
+            groupName: document.getElementById('gName').value,
+            leader: document.getElementById('gLeader').value,
+            members: document.getElementById('gMembers').value,
+            duties: document.getElementById('gDuties').value
+        };
+        const btn = document.querySelector('#editGroupModal .btn-save');
+        btn.innerText = "儲存中..."; btn.disabled = true;
+        fetch(API_URL, {method: 'POST', mode: 'no-cors', headers: {'Content-Type': 'text/plain'}, body: JSON.stringify(payload)})
+        .then(() => {
+            alert("更新成功！");
+            closeModal('editGroupModal');
+            loadData();
+            btn.innerText = "儲存變更"; btn.disabled = false;
+        });
+    }
+
+    // 輔助函式
+    function renderMembers(str) {
+        if (!str) return '-';
+        return str.split(/[,、]/).map(n => `<span class="member-tag" onclick="searchStaffByClick('${n.trim()}')">${n.trim()}</span>`).join('');
+    }
+    function updateMainStatus(idx, val) {
+        allTasks[idx].status = val;
+        renderDashboard(document.getElementById('content-area')); // UI Update
+        // 背景更新 status
+        fetch(API_URL, {method: 'POST', mode: 'no-cors', headers: {'Content-Type': 'text/plain'}, body: JSON.stringify({type: 'task', action: 'update', rowIndex: allTasks[idx].rowIndex, status: val})});
+    }
+    function getStatusColor(s) {
+        if(s==='done') return '#2ecc71'; if(s==='progress') return '#f39c12'; if(s==='delay') return '#ff4d4d'; return '#999';
+    }
+    function closeModal(id) { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
+    window.onclick = function(e) { if(e.target.classList.contains('modal')) closeModal(); }
+</script>
+
+</body>
+</html>
