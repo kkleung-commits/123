@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1-49 隨機幸運數字抽籤器</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #333;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 600px;
+            width: 90%;
+        }
+
+        h1 {
+            font-size: 2rem;
+            color: #4a5568;
+            margin-bottom: 0.5rem;
+        }
+
+        p.subtitle {
+            color: #718096;
+            margin-bottom: 2rem;
+            font-size: 1rem;
+        }
+
+        .ball-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            min-height: 80px;
+            margin-bottom: 2rem;
+        }
+
+        .ball {
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle at 30% 30%, #f6ad55, #dd6b20);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+        }
+
+        /* 讓波膽顏色更多元化（模擬攪珠） */
+        .ball:nth-child(2n) { background: radial-gradient(circle at 30% 30%, #63b3ed, #3182ce); }
+        .ball:nth-child(3n) { background: radial-gradient(circle at 30% 30%, #68d391, #38a169); }
+
+        @keyframes popIn {
+            0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+
+        .btn {
+            background: linear-gradient(90deg, #ed64a6 0%, #ecc94b 100%);
+            border: none;
+            color: white;
+            padding: 12px 35px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(237, 100, 166, 0.4);
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(237, 100, 166, 0.6);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .btn:disabled {
+            background: #cbd5e0;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>隨機號碼生成器</h1>
+        <p class="subtitle">從 1 至 49 中隨機抽取 6 個不重複的號碼</p>
+        
+        <div class="ball-container" id="ballContainer">
+            <div class="ball">?</div>
+            <div class="ball">?</div>
+            <div class="ball">?</div>
+            <div class="ball">?</div>
+            <div class="ball">?</div>
+            <div class="ball">?</div>
+        </div>
+
+        <button class="btn" id="drawBtn" onclick="drawNumbers()">立即攪珠</button>
+    </div>
+
+    <script>
+        function drawNumbers() {
+            const btn = document.getElementById('drawBtn');
+            const container = document.getElementById('ballContainer');
+            
+            // 停用按鈕，防止連續點擊導致動畫錯亂
+            btn.disabled = true;
+            container.innerHTML = '';
+
+            // 1. 生成 1 到 49 的數字池
+            const pool = [];
+            for (let i = 1; i <= 49; i++) {
+                pool.push(i);
+            }
+
+            // 2. 隨機抽取 6 個不重複的數字
+            const result = [];
+            for (let i = 0; i < 6; i++) {
+                const randomIndex = Math.floor(Math.random() * pool.length);
+                // 從池中切出該數字，確保不會重覆
+                const pickedNumber = pool.splice(randomIndex, 1)[0];
+                result.push(pickedNumber);
+            }
+
+            // 3. 將結果由小到大排序（符合一般攪珠習慣，如不需要可刪除此行）
+            result.sort((a, b) => a - b);
+
+            // 4. 逐個逐個將號碼球渲染到畫面上（模擬攪珠時間差）
+            result.forEach((num, index) => {
+                setTimeout(() => {
+                    const ball = document.createElement('div');
+                    ball.className = 'ball';
+                    ball.innerText = num;
+                    container.appendChild(ball);
+
+                    // 當最後一個球顯示完畢後，重新啟用按鈕
+                    if (index === 5) {
+                        btn.disabled = false;
+                    }
+                }, index * 200); // 每個球相隔 200 毫秒出現
+            });
+        }
+    </script>
+
+</body>
+</html>
