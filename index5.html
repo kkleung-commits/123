@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>草船借箭 - 多感官沉浸式語文學習遊戲 (KS4特教專用)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
@@ -10,6 +10,19 @@
         body {
             font-family: 'Noto Sans TC', sans-serif;
             touch-action: manipulation;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        /* 針對 iPad / iPhone 觸控極速優化 */
+        button, a, .primary-action-btn {
+            -webkit-tap-highlight-color: transparent !important;
+            -webkit-touch-callout: none !important;
+            -webkit-user-select: none !important;
+            user-select: none !important;
+            touch-action: manipulation !important;
+            cursor: pointer;
         }
         
         /* 高對比配色模式修正 */
@@ -156,13 +169,13 @@
             const gain = audioCtx.createGain();
             osc.type = 'sine';
             osc.frequency.setValueAtTime(440, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1);
+            osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.08);
             gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
             osc.connect(gain);
             gain.connect(audioCtx.destination);
             osc.start();
-            osc.stop(audioCtx.currentTime + 0.1);
+            osc.stop(audioCtx.currentTime + 0.08);
         }
 
         // 擊鼓音效
@@ -172,19 +185,19 @@
             const gain = audioCtx.createGain();
             osc.type = 'triangle';
             osc.frequency.setValueAtTime(120, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.3);
+            osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.25);
             gain.gain.setValueAtTime(0.8, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
             osc.connect(gain);
             gain.connect(audioCtx.destination);
             osc.start();
-            osc.stop(audioCtx.currentTime + 0.3);
+            osc.stop(audioCtx.currentTime + 0.25);
         }
 
         // 箭矢音效
         function playArrowSound() {
             initAudio();
-            const bufferSize = audioCtx.sampleRate * 0.1;
+            const bufferSize = audioCtx.sampleRate * 0.08;
             const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
             const data = buffer.getChannelData(0);
             for (let i = 0; i < bufferSize; i++) {
@@ -199,7 +212,7 @@
 
             const gain = audioCtx.createGain();
             gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
 
             noise.connect(filter);
             filter.connect(gain);
@@ -216,16 +229,16 @@
                 const gain = audioCtx.createGain();
                 osc.type = 'triangle';
                 osc.frequency.value = freq;
-                gain.gain.setValueAtTime(0.3, audioCtx.currentTime + idx * 0.12);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + idx * 0.12 + 0.3);
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime + idx * 0.1);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + idx * 0.1 + 0.25);
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
-                osc.start(audioCtx.currentTime + idx * 0.12);
-                osc.stop(audioCtx.currentTime + idx * 0.12 + 0.3);
+                osc.start(audioCtx.currentTime + idx * 0.1);
+                osc.stop(audioCtx.currentTime + idx * 0.1 + 0.25);
             });
         }
 
-        // TTS 廣東話 / 中文 語音合成朗讀 (已修復語言代碼與聲音加載問題)
+        // TTS 廣東話 / 中文 語音朗讀
         function speakText(text, callback) {
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
@@ -237,7 +250,7 @@
                 if (selectedVoice) {
                     utterance.voice = selectedVoice;
                 } else {
-                    utterance.lang = 'zh-HK'; // 標準粵語代碼
+                    utterance.lang = 'zh-HK';
                 }
 
                 utterance.rate = 0.85;
@@ -287,13 +300,35 @@
             }
         }
 
-        // 初始化與全局鍵盤監聽
+        // 初始化與零遲延觸控/鍵盤監聽
         window.onload = function() {
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.onvoiceschanged = () => {};
             }
-            loadLevel(1);
+            
+            // iPad 首觸預先解鎖音效引擎
+            const unlockAudio = () => {
+                initAudio();
+                document.removeEventListener('touchstart', unlockAudio);
+                document.removeEventListener('pointerdown', unlockAudio);
+            };
+            document.addEventListener('touchstart', unlockAudio, { once: true });
+            document.addEventListener('pointerdown', unlockAudio, { once: true });
 
+            // iPad 極速觸控事件：手指按下的瞬間 (0ms) 直接觸發 click，消滅 300ms 延遲
+            document.addEventListener('pointerdown', function(e) {
+                if (e.pointerType === 'touch') {
+                    const btn = e.target.closest('button');
+                    if (btn && !btn.dataset.touchHandled) {
+                        btn.dataset.touchHandled = "true";
+                        setTimeout(() => { delete btn.dataset.touchHandled; }, 300);
+                        btn.click();
+                        e.preventDefault();
+                    }
+                }
+            }, { passive: false });
+
+            // 全局鍵盤支援
             document.addEventListener('keydown', function(event) {
                 if (event.code === 'Space' || event.code === 'Enter') {
                     const primaryBtn = document.querySelector('.primary-action-btn');
@@ -303,6 +338,8 @@
                     }
                 }
             });
+
+            loadLevel(1);
         };
 
         function loadLevel(level) {
@@ -409,7 +446,7 @@
                         <button onclick="addStrawMan()" class="primary-action-btn py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xl rounded-2xl border-4 border-white focus:ring-4">
                             ➕ 搬上草人 (🌾)
                         </button>
-                        <button onclick="addDrum()" class="py-4 bg-amber-600 hover:bg-amber-500 text-white font-black text-xl rounded-2xl border-4 border-white focus:ring-4">
+                        <button onclick="addDrum()" class="primary-action-btn py-4 bg-amber-600 hover:bg-amber-500 text-white font-black text-xl rounded-2xl border-4 border-white focus:ring-4">
                             ➕ 搬上戰鼓 (🥁)
                         </button>
                     </div>
