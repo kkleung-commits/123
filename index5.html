@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>草船借箭 - 多感官沉浸式語文學習遊戲 (KS4特教專用)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            touch-action: manipulation;
+        }
+        
+        /* 高對比配色模式 */
+        .theme-yellow-black {
+            background-color: #000000 !important;
+            color: #FFFF00 !important;
+        }
+        .theme-yellow-black button {
+            background-color: #222222 !important;
+            color: #FFFF00 !important;
+            border: 4px solid #FFFF00 !important;
+        }
+        .theme-yellow-black button:focus, .theme-yellow-black button:hover {
+            background-color: #FFFF00 !important;
+            color: #000000 !important;
+        }
+
+        .theme-high-contrast {
+            background-color: #FFFFFF !important;
+            color: #000000 !important;
+        }
+        .theme-high-contrast button {
+            background-color: #0055FF !important;
+            color: #FFFFFF !important;
+            border: 4px solid #000000 !important;
+        }
+
+        /* 呼吸與擊鼓動畫 */
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(234, 179, 8, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(234, 179, 8, 0); }
+        }
+        .pulse-button {
+            animation: pulse-ring 2s infinite;
+        }
+
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+        .shaking {
+            animation: shake 0.4s infinite;
+        }
+    </style>
+</head>
+<body id="app-body" class="bg-slate-900 text-white min-h-screen flex flex-col justify-between transition-colors duration-300">
+
+    <header class="bg-slate-800 p-3 sm:p-4 border-b-4 border-yellow-500 shadow-md">
+        <div class="max-w-6xl mx-auto flex flex-wrap justify-between items-center gap-2">
+            <!-- 輔助設定與輔具按鈕 -->
+            <div class="flex items-center gap-2 sm:gap-4 flex-wrap">
+                <span class="font-bold text-lg sm:text-xl text-yellow-400">草船借箭語文學習</span>
+                
+                <!-- 主題切換 -->
+                <button onclick="toggleTheme()" class="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm sm:text-base border-2 border-white focus:ring-4 focus:ring-yellow-400">
+                    🎨 色彩模式
+                </button>
+                
+                <!-- 字體放大 -->
+                <button onclick="toggleFontSize()" class="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm sm:text-base border-2 border-white focus:ring-4 focus:ring-yellow-400">
+                    🔍 字體放大 (<span id="font-size-label">大</span>)
+                </button>
+            </div>
+
+            <!-- 語音控制 -->
+            <div class="flex items-center gap-2">
+                <button onclick="speakCurrentInstruction()" class="px-4 py-2 bg-yellow-500 text-black font-extrabold hover:bg-yellow-400 rounded-xl shadow-lg border-2 border-black text-sm sm:text-base flex items-center gap-1 focus:ring-4 focus:ring-white">
+                    🔊 重複語音朗讀
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow flex flex-col items-center justify-center p-4 max-w-5xl mx-auto w-full">
+        
+        <!-- 進度指示器 (配合視覺與語音) -->
+        <div class="w-full bg-slate-800 p-3 rounded-2xl mb-4 border-2 border-slate-600 flex justify-between items-center text-center">
+            <span class="text-yellow-400 font-bold text-lg sm:text-2xl" id="level-title">第 1 關：認識主角與任務</span>
+            <div class="text-base sm:text-xl font-bold bg-slate-700 px-4 py-1 rounded-full border border-yellow-500" id="step-indicator">關卡 1 / 5</div>
+        </div>
+
+        <!-- 遊戲動態展示與互動區 -->
+        <div id="game-card" class="w-full bg-slate-800 border-4 border-yellow-400 rounded-3xl p-6 shadow-2xl flex flex-col items-center justify-between min-h-[420px] transition-all">
+            <!-- 內容動態插入 -->
+        </div>
+
+    </main>
+
+    <footer class="bg-slate-800 p-4 border-t-2 border-slate-700 text-center">
+        <p class="text-sm sm:text-lg text-yellow-300 font-semibold">
+            💡 提示：按鍵盤 <kbd class="px-2 py-1 bg-slate-700 rounded border border-white">Space 空格鍵</kbd> 或 <kbd class="px-2 py-1 bg-slate-700 rounded border border-white">Enter 鍵</kbd> 即可進行主要操作或確認。
+        </p>
+    </footer>
+
+    <script>
+        // Web Audio API 合成音效生成器 (無需外部音訊檔，確保穩定播放)
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // 播放按鈕點擊音效
+        function playClickSound() {
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
+
+        // 播放擊鼓聲 (深沉低音)
+        function playDrumSound() {
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.3);
+            gain.gain.setValueAtTime(0.8, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+
+        // 播放箭矢射中草人音效 (短促噪訊與中頻)
+        function playArrowSound() {
+            initAudio();
+            const bufferSize = audioCtx.sampleRate * 0.1;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = Math.random() * 2 - 1;
+            }
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = buffer;
+
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'bandpass';
+            filter.frequency.value = 1000;
+
+            const gain = audioCtx.createGain();
+            gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+            noise.start();
+        }
+
+        // 播放通關歡呼音效
+        function playVictorySound() {
+            initAudio();
+            const notes = [261.63, 329.63, 392.00, 523.25]; // C E G C
+            notes.forEach((freq, idx) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime + idx * 0.12);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + idx * 0.12 + 0.3);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(audioCtx.currentTime + idx * 0.12);
+                osc.stop(audioCtx.currentTime + idx * 0.12 + 0.3);
+            });
+        }
+    </script>
+
+    <script>
+        let currentTextToRead = "";
+        let fontSizeMode = 1; // 0: Normal, 1: Large, 2: Extra Large
+        let themeMode = 0; // 0: Dark, 1: High Contrast Yellow/Black, 2: White
+
+        // 廣東話 / 中文 語音合成朗讀
+        function speakText(text, callback) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel(); // 停止先前的朗讀
+                const utterance = new SpeechSynthesisUtterance(text);
+                
+                // 優先挑選粵語 (zh-HK) 或 廣東話，若無則降級至普通話/中文 (zh-TW, zh-CN)
+                const voices = window.speechSynthesis.getVoices();
+                let selectedVoice = voices.find(v => v.lang.includes('zh-HK') || v.lang.includes('cantonese') || v.lang.includes('zh-TW'));
+                if (selectedVoice) {
+                    utterance.voice = selectedVoice;
+                } else {
+                    utterance.lang = 'zh-Hant';
+                }
+
+                utterance.rate = 0.85; // 稍慢語速，適合特殊教育學習者
+                utterance.pitch = 1.0;
+
+                if (callback) {
+                    utterance.onend = callback;
+                }
+
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function speakCurrentInstruction() {
+            if (currentTextToRead) {
+                speakText(currentTextToRead);
+            }
+        }
+
+        // 切換主題 (適合低視力學生)
+        function toggleTheme() {
+            playClickSound();
+            const body = document.getElementById('app-body');
+            body.classList.remove('theme-yellow-black', 'theme-high-contrast');
+            themeMode = (themeMode + 1) % 3;
+            if (themeMode === 1) {
+                body.classList.add('theme-yellow-black');
+            } else if (themeMode === 2) {
+                body.classList.add('theme-high-contrast');
+            }
+        }
+
+        // 切換字體大小
+        function toggleFontSize() {
+            playClickSound();
+            const card = document.getElementById('game-card');
+            const label = document.getElementById('font-size-label');
+            fontSizeMode = (fontSizeMode + 1) % 3;
+
+            if (fontSizeMode === 0) {
+                card.style.fontSize = '1.1rem';
+                label.innerText = '普通';
+            } else if (fontSizeMode === 1) {
+                card.style.fontSize = '1.5rem';
+                label.innerText = '大';
+            } else {
+                card.style.fontSize = '2rem';
+                label.innerText = '特大';
+            }
+        }
+    </script>
+
+    <script>
+        let currentLevel = 1;
+        let gameData = {
+            level2StrawMen: 0,
+            level2Drums: 0,
+            level4DrumCount: 0,
+            level4Side: 'left' // 'left' or 'right'
+        };
+
+        // 頁面載入後初始化
+        window.onload = function() {
+            // 確保語音套件加載
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.onvoiceschanged = () => {};
+            }
+            loadLevel(1);
+
+            // 全局鍵盤事件支援 (單鍵/空格/Enter 切換)
+            document.addEventListener('keydown', function(event) {
+                if (event.code === 'Space' || event.code === 'Enter') {
+                    const primaryBtn = document.querySelector('.primary-action-btn');
+                    if (primaryBtn) {
+                        event.preventDefault();
+                        primaryBtn.click();
+                    }
+                }
+            });
+        };
+
+        // 載入關卡
+        function loadLevel(level) {
+            currentLevel = level;
+            const container = document.getElementById('game-card');
+            const levelTitle = document.getElementById('level-title');
+            const stepIndicator = document.getElementById('step-indicator');
+
+            stepIndicator.innerText = `關卡 ${level} / 5`;
+
+            switch(level) {
+                case 1:
+                    renderLevel1(container, levelTitle);
+                    break;
+                case 2:
+                    renderLevel2(container, levelTitle);
+                    break;
+                case 3:
+                    renderLevel3(container, levelTitle);
+                    break;
+                case 4:
+                    renderLevel4(container, levelTitle);
+                    break;
+                case 5:
+                    renderLevel5(container, levelTitle);
+                    break;
+            }
+        }
+
+        // ==========================================
+        // 關卡 1：認識主角與任務 (Character & Goal)
+        // ==========================================
+        function renderLevel1(container, levelTitle) {
+            levelTitle.innerText = "第 1 關：認識主角與任務";
+            
+            const instruction = "歡迎來到三國故事《草船借箭》。周瑜考驗諸葛亮，要在十天內做十萬支箭。諸葛亮非常有智慧，他說：『只需要三天！』請點擊按鈕，幫助諸葛亮接下任務！";
+            currentTextToRead = instruction;
+            speakText(instruction);
+
+            container.innerHTML = `
+                <div class="text-center space-y-4">
+                    <div class="flex justify-center items-center gap-6 my-2">
+                        <!-- 諸葛亮卡片 -->
+                        <div class="bg-slate-700 p-4 rounded-2xl border-4 border-yellow-400 flex flex-col items-center">
+                            <svg class="w-24 h-24 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                            </svg>
+                            <span class="font-extrabold text-2xl mt-2">諸葛亮</span>
+                            <span class="text-yellow-300 font-bold">足智多謀</span>
+                        </div>
+
+                        <div class="text-3xl font-black text-yellow-400">VS</div>
+
+                        <!-- 周瑜卡片 -->
+                        <div class="bg-slate-700 p-4 rounded-2xl border-4 border-slate-500 flex flex-col items-center">
+                            <svg class="w-24 h-24 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                            </svg>
+                            <span class="font-extrabold text-2xl mt-2">周瑜</span>
+                            <span class="text-slate-300 font-bold">提出考驗</span>
+                        </div>
+                    </div>
+
+                    <p class="text-xl sm:text-2xl font-bold leading-relaxed px-4">
+                        周瑜：「能在十天內造出十萬支箭嗎？」<br>
+                        諸葛亮：「沒問題，我只需要 <span class="text-yellow-400 font-black underline">三天</span>！」
+                    </p>
+                </div>
+
+                <button onclick="nextFromLevel1()" class="primary-action-btn pulse-button w-full sm:w-4/5 py-5 bg-yellow-500 text-black font-black text-2xl sm:text-3xl rounded-3xl shadow-2xl border-4 border-white hover:bg-yellow-400 transition transform active:scale-95 focus:ring-8 focus:ring-yellow-300 my-4">
+                    👉 點擊：協助諸葛亮接下任務
+                </button>
+            `;
+        }
+
+        function nextFromLevel1() {
+            playClickSound();
+            speakText("很好！諸葛亮接受了任務，只需要三天！讓我們進入下一關，準備草船！", () => {
+                loadLevel(2);
+            });
+        }
+
+        // ==========================================
+        // 關卡 2：準備草船 (Preparation)
+        // ==========================================
+        function renderLevel2(container, levelTitle) {
+            levelTitle.innerText = "第 2 關：籌備草船與物資";
+            gameData.level2StrawMen = 0;
+            gameData.level2Drums = 0;
+
+            const instruction = "借箭需要準備快船、草人和戰鼓！請點擊按鈕，把『草人』和『戰鼓』搬上船！";
+            currentTextToRead = instruction;
+            speakText(instruction);
+
+            updateLevel2UI(container);
+        }
+
+        function updateLevel2UI(container) {
+            const isComplete = gameData.level2StrawMen >= 3 && gameData.level2Drums >= 3;
+
+            container.innerHTML = `
+                <div class="text-center w-full space-y-4">
+                    <p class="text-xl sm:text-2xl font-bold">把物資裝滿船隻：</p>
+                    
+                    <div class="flex justify-around items-center bg-slate-700 p-4 rounded-2xl border-2 border-slate-500">
+                        <div class="text-center">
+                            <span class="text-3xl">🌾</span>
+                            <div class="text-lg font-bold">草人：<span class="text-yellow-400 text-2xl">${gameData.level2StrawMen}</span> / 3</div>
+                        </div>
+                        <div class="text-center">
+                            <span class="text-3xl">🥁</span>
+                            <div class="text-lg font-bold">戰鼓：<span class="text-yellow-400 text-2xl">${gameData.level2Drums}</span> / 3</div>
+                        </div>
+                    </div>
+
+                    <!-- 船隻示意圖 -->
+                    <div class="relative bg-blue-900 border-4 border-blue-400 rounded-2xl h-36 flex items-center justify-center overflow-hidden">
+                        <div class="text-4xl">⛵ 輕快竹船</div>
+                        <div class="absolute bottom-2 flex gap-3 text-2xl">
+                            ${'🌾'.repeat(gameData.level2StrawMen)}
+                            ${'🥁'.repeat(gameData.level2Drums)}
+                        </div>
+                    </div>
+                </div>
+
+                ${!isComplete ? `
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full mt-4">
+                        <button onclick="addStrawMan()" class="py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xl rounded-2xl border-4 border-white focus:ring-4">
+                            ➕ 搬上草人 (🌾)
+                        </button>
+                        <button onclick="addDrum()" class="py-4 bg-amber-600 hover:bg-amber-500 text-white font-black text-xl rounded-2xl border-4 border-white focus:ring-4">
+                            ➕ 搬上戰鼓 (🥁)
+                        </button>
+                    </div>
+                ` : `
+                    <button onclick="nextFromLevel2()" class="primary-action-btn pulse-button w-full py-5 bg-yellow-500 text-black font-black text-2xl sm:text-3xl rounded-3xl border-4 border-white my-4">
+                        ✅ 物資準備齊全！乘霧出航！
+                    </button>
+                `}
+            `;
+        }
+
+        function addStrawMan() {
+            if (gameData.level2StrawMen < 3) {
+                gameData.level2StrawMen++;
+                playClickSound();
+                speakText(`搬上草人！目前有${gameData.level2StrawMen}個草人`);
+                updateLevel2UI(document.getElementById('game-card'));
+            }
+        }
+
+        function addDrum() {
+            if (gameData.level2Drums < 3) {
+                gameData.level2Drums++;
+                playDrumSound();
+                speakText(`搬上戰鼓！目前有${gameData.level2Drums}個戰鼓`);
+                updateLevel2UI(document.getElementById('game-card'));
+            }
+        }
+
+        function nextFromLevel2() {
+            playVictorySound();
+            speakText("太棒了！二十條草船裝滿了草人和戰鼓。準備出發！", () => {
+                loadLevel(3);
+            });
+        }
+
+        // ==========================================
+        // 關卡 3：乘霧出航 (Sailing in Fog)
+        // ==========================================
+        function renderLevel3(container, levelTitle) {
+            levelTitle.innerText = "第 3 關：趁著大霧出航";
+            
+            const instruction = "第三天清晨，江上颳起大霧，看不清前方！諸葛亮選擇大霧天氣，曹操就不敢輕易出兵。請點擊『開船前進』，將船駛向曹操水寨！";
+            currentTextToRead = instruction;
+            speakText(instruction);
+
+            container.innerHTML = `
+                <div class="text-center space-y-4 w-full">
+                    <!-- 大霧氛圍動畫框 -->
+                    <div class="relative bg-slate-700 border-4 border-slate-400 rounded-3xl p-8 h-48 flex flex-col items-center justify-center overflow-hidden">
+                        <!-- 白霧效果 Overlay -->
+                        <div class="absolute inset-0 bg-white opacity-40 animate-pulse"></div>
+                        <div class="relative z-10 text-4xl sm:text-5xl font-black text-slate-100 flex items-center gap-3">
+                            🌫️ 🌫️ 大霧漫天 🌫️ 🌫️
+                        </div>
+                        <p class="relative z-10 text-yellow-300 font-bold text-xl mt-2">江上看不清視線，是借箭的最佳時機！</p>
+                    </div>
+
+                    <p class="text-2xl font-bold">按下按鈕，帶領船隊在霧中前進！</p>
+                </div>
+
+                <button onclick="nextFromLevel3()" class="primary-action-btn pulse-button w-full sm:w-4/5 py-5 bg-blue-600 hover:bg-blue-500 text-white font-black text-2xl sm:text-3xl rounded-3xl border-4 border-white shadow-2xl transition transform active:scale-95 focus:ring-8 my-4">
+                    ⛵ 點擊：開船開往曹操水寨
+                </button>
+            `;
+        }
+
+        function nextFromLevel3() {
+            playClickSound();
+            speakText("船隻在濃霧中順利到達曹操水寨附近！下一步，準備擊鼓吶喊！", () => {
+                loadLevel(4);
+            });
+        }
+
+        // ==========================================
+        // 關卡 4：擊鼓借箭 (Drums & Borrowing Arrows)
+        // ==========================================
+        function renderLevel4(container, levelTitle) {
+            levelTitle.innerText = "第 4 關：擊鼓吶喊與借箭";
+            gameData.level4DrumCount = 0;
+            gameData.level4Side = 'left';
+
+            const instruction = "船隊靠近水寨了！請連續點擊『擊鼓吶喊』按鈕！曹操聽到鼓聲以為敵襲，就會命令弓箭手大量射箭！";
+            currentTextToRead = instruction;
+            speakText(instruction);
+
+            updateLevel4UI(container);
+        }
+
+        function updateLevel4UI(container) {
+            const arrowCount = gameData.level4DrumCount * 12000;
+            const isTurningPoint = gameData.level4DrumCount === 5 && gameData.level4Side === 'left';
+            const isComplete = gameData.level4DrumCount >= 10;
+
+            container.innerHTML = `
+                <div class="text-center w-full space-y-3">
+                    <div class="flex justify-between items-center bg-slate-700 px-6 py-3 rounded-2xl border-2 border-yellow-400">
+                        <span class="text-xl font-bold">受箭船側：<span class="text-yellow-300 font-black">${gameData.level4Side === 'left' ? '👈 船左側' : '👉 船右側'}</span></span>
+                        <span class="text-xl font-bold">已收集箭數量：<span class="text-emerald-400 font-black text-3xl">${arrowCount.toLocaleString()}</span> 支</span>
+                    </div>
+
+                    <!-- 借箭戰場視覺區 -->
+                    <div id="battle-field" class="relative bg-slate-900 border-4 border-red-500 rounded-2xl h-44 flex items-center justify-between px-6 overflow-hidden">
+                        <div class="text-center">
+                            <span class="text-4xl">🏹</span>
+                            <div class="text-sm font-bold text-red-400">曹操水寨</div>
+                        </div>
+
+                        <!-- 射箭動畫圖示 -->
+                        <div class="text-2xl font-bold text-yellow-400 tracking-widest flex items-center gap-1">
+                            <span>🏹</span>
+                            <span class="animate-ping">🏹 🏹 🏹</span>
+                            <span>🏹</span>
+                        </div>
+
+                        <div class="text-center">
+                            <span class="text-4xl">⛵</span>
+                            <div class="text-sm font-bold text-yellow-400">草船 (${gameData.level4Side === 'left' ? '受箭中' : '調頭受箭'})</div>
+                        </div>
+                    </div>
+                </div>
+
+                ${!isComplete ? `
+                    ${isTurningPoint ? `
+                        <button onclick="turnShipSide()" class="primary-action-btn pulse-button w-full py-5 bg-purple-600 hover:bg-purple-500 text-white font-black text-2xl sm:text-3xl rounded-3xl border-4 border-white my-3">
+                            🔄 船左側滿箭！點擊「船隻掉頭」接收另一面！
+                        </button>
+                    ` : `
+                        <button onclick="hitDrumAndBorrow()" class="primary-action-btn pulse-button w-full py-5 bg-red-600 hover:bg-red-500 text-white font-black text-2xl sm:text-3xl rounded-3xl border-4 border-white my-3">
+                            🥁 點擊：擊鼓吶喊！吸引射箭！ (已敲擊 ${gameData.level4DrumCount}/10 次)
+                        </button>
+                    `}
+                ` : `
+                    <button onclick="nextFromLevel4()" class="primary-action-btn pulse-button w-full py-5 bg-yellow-500 text-black font-black text-2xl sm:text-3xl rounded-3xl border-4 border-white my-3">
+                        🎉 箭矢已經超過十萬支！滿載而歸！
+                    </button>
+                `}
+            `;
+        }
+
+        function hitDrumAndBorrow() {
+            gameData.level4DrumCount++;
+            playDrumSound();
+            setTimeout(playArrowSound, 100);
+
+            const battleField = document.getElementById('battle-field');
+            if (battleField) {
+                battleField.classList.add('shaking');
+                setTimeout(() => battleField.classList.remove('shaking'), 300);
+            }
+
+            if (gameData.level4DrumCount === 5) {
+                speakText("船的左邊已經插滿了箭！諸葛亮說：『把船掉頭，讓另一邊也接收箭！』");
+            } else if (gameData.level4DrumCount < 10) {
+                speakText(`擊鼓吶喊！嗖嗖嗖，箭射中了草人！`);
+            } else {
+                speakText("太棒了！兩邊草人都插滿了箭，已經有十多萬支箭了！");
+            }
+
+            updateLevel4UI(document.getElementById('game-card'));
+        }
+
+        function turnShipSide() {
+            playClickSound();
+            gameData.level4Side = 'right';
+            speakText("船隻成功掉頭！現在讓右側的草人接收箭矢！");
+            updateLevel4UI(document.getElementById('game-card'));
+        }
+
+        function nextFromLevel4() {
+            playVictorySound();
+            speakText("諸葛亮笑著說：『謝謝曹操丞相送箭！』讓我們回航向周瑜交差！", () => {
+                loadLevel(5);
+            });
+        }
+
+        // ==========================================
+        // 關卡 5：滿載而歸 (Return & Success)
+        // ==========================================
+        function renderLevel5(container, levelTitle) {
+            levelTitle.innerText = "第 5 關：滿載而歸與學習總結";
+
+            const instruction = "諸葛亮利用大霧、草人和智慧，順利借到超過十萬支箭！周瑜非常佩服，承認諸葛亮神機妙算！恭喜你完成了所有學習關卡！";
+            currentTextToRead = instruction;
+            speakText(instruction);
+
+            container.innerHTML = `
+                <div class="text-center space-y-4">
+                    <div class="text-5xl my-2 animate-bounce">🏆 🎉 🏆</div>
+                    
+                    <h2 class="text-3xl sm:text-4xl font-extrabold text-yellow-400">任務大成功！</h2>
+
+                    <div class="bg-slate-700 p-5 rounded-2xl border-4 border-yellow-400 text-left space-y-2 text-lg sm:text-xl">
+                        <p class="font-bold text-yellow-300">📖 語文課文重點複習：</p>
+                        <p>1. <b>主角智慧：</b>諸葛亮懂得觀察天氣（大霧）與人心。</p>
+                        <p>2. <b>巧妙計謀：</b>用草人和戰鼓吸引曹操射箭，輕鬆得到箭。</p>
+                        <p>3. <b>成語學習：</b>【神機妙算】——形容諸葛亮計謀驚人，極有智慧！</p>
+                    </div>
+                </div>
+
+                <button onclick="restartGame()" class="primary-action-btn pulse-button w-full sm:w-4/5 py-5 bg-emerald-500 hover:bg-emerald-400 text-black font-black text-2xl sm:text-3xl rounded-3xl border-4 border-white shadow-2xl my-4">
+                    🔄 再玩一次 / 重新複習
+                </button>
+            `;
+        }
+
+        function restartGame() {
+            playClickSound();
+            speakText("重新開始學習！", () => {
+                loadLevel(1);
+            });
+        }
+    </script>
+</body>
+</html>
