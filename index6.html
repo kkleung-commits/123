@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-HK">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>名作欣賞：梵高的樹葉</title>
+<style>
+:root {
+  --bg-color: #0b1030;
+  --header-bg: linear-gradient(90deg, #111a45, #1f2b66);
+  --panel-bg: #18224f;
+  --accent-gold: #ffe37a;
+  --btn-grad: linear-gradient(180deg, #ffe98a, #f5b431);
+  --text-main: #ffffff;
+  --app-height: 100vh;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  height: var(--app-height);
+  overflow: hidden;
+  background: var(--bg-color);
+  color: var(--text-main);
+  font-family: system-ui, -apple-system, "PingFang HK", "PingFang TC", "Noto Sans HK", "Microsoft JhengHei", sans-serif;
+}
+
+#app {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--header-bg);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.18);
+  z-index: 10;
+}
+
+.brand {
+  flex: 1;
+  min-width: 0;
+  font-weight: 800;
+  font-size: clamp(15px, 2.5vw, 22px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tool {
+  font: inherit;
+  font-weight: 800;
+  font-size: clamp(13px, 2vw, 16px);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-radius: 12px;
+  padding: 6px 12px;
+  min-height: 42px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.tool[aria-pressed="false"] { opacity: 0.5; }
+
+.stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.screen {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  gap: clamp(10px, 2vw, 18px);
+  padding: clamp(12px, 2.5vw, 24px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.screen.on { display: flex; }
+
+h1 { font-size: clamp(22px, 5vw, 42px); line-height: 1.25; font-weight: 900; }
+h2 { font-size: clamp(18px, 3.8vw, 30px); line-height: 1.3; font-weight: 900; }
+p, li { font-size: clamp(15px, 2.8vw, 22px); line-height: 1.55; }
+.lead { font-size: clamp(16px, 3.2vw, 24px); }
+.hint { opacity: 0.85; font-size: clamp(14px, 2.4vw, 18px); }
+
+.center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: clamp(12px, 2.5vh, 24px);
+  margin: auto 0;
+}
+
+.btn {
+  font: inherit;
+  font-weight: 900;
+  font-size: clamp(16px, 3vw, 24px);
+  color: #231604;
+  background: var(--btn-grad);
+  border: 3px solid #fff6cf;
+  border-radius: 20px;
+  padding: 10px 20px;
+  min-height: clamp(52px, 8vh, 76px);
+  cursor: pointer;
+  box-shadow: 0 5px 0 rgba(0,0,0,0.3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-decoration: none;
+}
+.btn:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,0.3); }
+.btn.big { width: 100%; max-width: 480px; }
+.btn.mid { min-height: clamp(48px, 7vh, 64px); font-size: clamp(15px, 2.5vw, 20px); }
+.btn.ghost { background: rgba(255, 255, 255, 0.15); color: #fff; border-color: rgba(255, 255, 255, 0.45); box-shadow: none; }
+
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; }
+
+.tag {
+  display: inline-block;
+  font-weight: 800;
+  font-size: clamp(13px, 2vw, 16px);
+  padding: 4px 14px;
+  border-radius: 999px;
+  background: rgba(255, 214, 63, 0.18);
+  border: 2px solid rgba(255, 214, 63, 0.6);
+  color: #ffe58a;
+}
+
+.heroBox {
+  width: min(320px, 80vw);
+  aspect-ratio: 1 / 1;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  background: #16204d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+.heroBox img.art, .art { display: block; width: 100%; height: 100%; object-fit: contain; background: #0b1030; }
+
+.whoBox {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+  flex: 1;
+}
+
+.whoTxt { width: 100%; text-align: left; }
+.cap2 { font-size: clamp(13px, 2.2vw, 16px); font-weight: 800; opacity: 0.9; margin-top: 6px; color: #ffe58a; }
+
+/* iPad / 橫屏適應 (Landscape & Tablet) */
+@media (min-width: 768px), (orientation: landscape) and (min-height: 480px) {
+  .whoBox {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+  }
+  .whoBox .heroBox {
+    width: 45%;
+    max-width: 480px;
+    height: clamp(220px, 45vh, 400px);
+    aspect-ratio: auto;
+    flex: 0 0 auto;
+  }
+  .whoTxt { flex: 1; min-width: 0; }
+}
+
+.nav { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; width: 100%; }
+.stepBtn {
+  font: inherit;
+  font-weight: 900;
+  color: #fff;
+  background: var(--panel-bg);
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 16px;
+  padding: 6px 10px;
+  min-width: clamp(80px, 16vw, 130px);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.stepBtn .ico { width: clamp(44px, 9vw, 70px); height: clamp(44px, 9vw, 70px); border-radius: 10px; overflow: hidden; }
+.stepBtn .nm { font-size: clamp(12px, 2vw, 16px); }
+.stepBtn.on { border-color: var(--accent-gold); box-shadow: 0 0 0 3px rgba(255, 227, 122, 0.4); background: #26346f; }
+
+.dots { display: flex; gap: 8px; justify-content: center; margin: 4px 0; }
+.dot { width: 12px; height: 12px; border-radius: 50%; background: rgba(255,255,255,0.28); }
+.dot.on { background: var(--accent-gold); transform: scale(1.25); }
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: clamp(10px, 2vw, 18px);
+  width: 100%;
+}
+.card {
+  font: inherit;
+  color: #fff;
+  background: var(--panel-bg);
+  border: 3px solid rgba(255, 255, 255, 0.28);
+  border-radius: 18px;
+  padding: 8px;
+  cursor: pointer;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+.card .thumb { width: 100%; aspect-ratio: 4 / 3; border-radius: 12px; overflow: hidden; background: #0f1738; }
+.card .cap { font-weight: 900; font-size: clamp(14px, 2.4vw, 18px); }
+
+/* 彈出層 & 放大頁面 */
+.overlay, .zoom {
+  position: fixed;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(7, 11, 32, 0.96);
+  z-index: 100;
+  overflow-y: auto;
+}
+.overlay.on, .zoom.on { display: flex; }
+.overlay .heroBox { width: min(90vw, 540px); height: min(45vh, 380px); aspect-ratio: auto; }
+#ovLines { list-style: none; display: flex; flex-direction: column; gap: 8px; max-width: 600px; text-align: left; }
+
+.zoom img { flex: 1 1 auto; width: 100%; max-height: 80vh; object-fit: contain; }
+.zoomBar { display: flex; flex-direction: column; gap: 8px; align-items: center; width: 100%; }
+.zoomCap { font-size: clamp(15px, 2.5vw, 20px); font-weight: 800; color: #ffe58a; text-align: center; }
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: clamp(16px, 4vh, 32px);
+  transform: translate(-50%, 40px);
+  background: rgba(9, 14, 40, 0.95);
+  border: 3px solid var(--accent-gold);
+  color: #fff;
+  font-weight: 900;
+  font-size: clamp(15px, 2.8vw, 20px);
+  padding: 10px 20px;
+  border-radius: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.25s ease;
+  max-width: 90vw;
+  text-align: center;
+  z-index: 120;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="brand">名作欣賞 · 梵高的樹葉</div>
+    <button id="btnSound" class="tool" type="button" aria-pressed="true" aria-label="廣東話語音開關">🔊 廣東話</button>
+    <button id="btnHome" class="tool" type="button" aria-label="回到主頁">🏠 主頁</button>
+  </header>
+
+  <main class="stage">
+    <!-- 主頁 -->
+    <section id="s-start" class="screen on" aria-label="主頁">
+      <div class="center">
+        <span class="tag">視藝科 · 名作欣賞</span>
+        <h1>梵高的樹葉</h1>
+        <div class="heroBox" id="startArt"></div>
+        <p class="lead">一齊認識梵高，欣賞佢畫嘅樹葉啦！</p>
+        <button id="btnStart" class="btn big" type="button">開始欣賞 ▶</button>
+        <div class="row">
+          <button class="btn ghost mid" type="button" data-go="who">1 認識梵高</button>
+          <button class="btn ghost mid" type="button" data-go="works">2 欣賞樹葉畫</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 認識梵高 -->
+    <section id="s-who" class="screen" aria-label="認識梵高">
+      <div class="whoBox">
+        <div class="heroBox" id="whoArt"></div>
+        <div class="whoTxt">
+          <h2 id="whoTitle"></h2>
+          <p id="whoBody"></p>
+          <p class="cap2" id="whoCap"></p>
+        </div>
+      </div>
+      <div class="nav" id="whoNav" role="group" aria-label="選擇頁面"></div>
+      <div class="dots" id="whoDots"></div>
+      <div class="row">
+        <button id="whoPrev" class="btn ghost mid" type="button">◀ 上一頁</button>
+        <button id="whoZoom" class="btn mid" type="button">🔍 放大圖畫</button>
+        <button id="whoNext" class="btn mid" type="button">下一頁 ▶</button>
+      </div>
+    </section>
+
+    <!-- 欣賞樹葉畫 -->
+    <section id="s-works" class="screen" aria-label="欣賞樹葉畫">
+      <h2>欣賞：梵高的樹葉畫</h2>
+      <p class="hint">點擊一下圖畫，睇吓梵高畫咗乜嘢。</p>
+      <div class="cards" id="workCards"></div>
+      <div class="row" style="margin-top: auto; padding-top: 10px;">
+        <button id="wGoDone" class="btn mid" type="button">完成欣賞 ▶</button>
+      </div>
+    </section>
+
+    <!-- 完成頁面 -->
+    <section id="s-done" class="screen" aria-label="完成">
+      <div class="center">
+        <h1>你真棒！👏</h1>
+        <p id="doneMsg">你已經認識咗梵高，仲欣賞埋佢畫嘅樹葉畫添！</p>
+        <button id="again" class="btn big" type="button">再睇一次梵高 🔄</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- 畫作詳情 Overlay -->
+  <div class="overlay" id="workOv" role="dialog" aria-modal="true" aria-label="圖畫介紹">
+    <div class="heroBox" id="ovArt"></div>
+    <h2 id="ovTitle"></h2>
+    <ul id="ovLines"></ul>
+    <div class="row" style="margin-top: 10px;">
+      <button id="ovZoom" class="btn mid" type="button">🔍 放大圖畫</button>
+      <button id="ovClose" class="btn mid ghost" type="button">◀ 返回</button>
+    </div>
+  </div>
+
+  <!-- 全螢幕放大檢視 Modal -->
+  <div class="zoom" id="zoom" role="dialog" aria-modal="true" aria-label="放大圖畫">
+    <img id="zoomImg" alt="梵高真跡圖畫" src="">
+    <div class="zoomBar">
+      <div class="zoomCap" id="zoomCap"></div>
+      <button id="zoomOut" class="btn mid" type="button">◀ 返回</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+  <div id="live" class="sr" aria-live="polite"></div>
+</div>
+
+<script>
+(function() {
+  "use strict";
+
+  // 動態設定 Viewport 高度 (解決 iOS / Android 瀏覽器網址列問題)
+  function setAppHeight() {
+    document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');
+  }
+  window.addEventListener('resize', setAppHeight);
+  setAppHeight();
+
+  function S(s) { return document.querySelector(s); }
+  function SA(s) { return Array.prototype.slice.call(document.querySelectorAll(s)); }
+
+  var state = { sound: true, scr: 'start', slide: 0 };
+
+  /* ---- 廣東話 Web Speech API 語音模組 ---- */
+  var cantoneseVoice = null;
+
+  function findCantoneseVoice() {
+    if (!('speechSynthesis' in window)) return;
+    var voices = speechSynthesis.getVoices() || [];
+    
+    // 嚴格篩選廣東話 / 粵語語音 (zh-HK, yue-HK)
+    var best = voices.find(function(v) {
+      var lang = (v.lang || '').toLowerCase().replace('_', '-');
+      var name = (v.name || '').toLowerCase();
+      return lang === 'zh-hk' || lang === 'yue-hk' || lang === 'zh-mo' || 
+             lang.startsWith('yue') || name.includes('cantonese') || 
+             name.includes('sin-ji') || name.includes('sinji') || name.includes('粵');
+    });
+
+    if (best) {
+      cantoneseVoice = best;
+    } else {
+      cantoneseVoice = null; // 若無特定語音包，交給系統憑 u.lang = 'zh-HK' 自行選擇
+    }
+  }
+
+  if ('speechSynthesis' in window) {
+    findCantoneseVoice();
+    speechSynthesis.onvoiceschanged = findCantoneseVoice;
+  }
+
+  // 首刷點擊解鎖音效與 TTS 授權 (iOS Safari / iPadOS 必備)
+  var audioUnlocked = false;
+  function unlockAudio() {
+    if (audioUnlocked) return;
+    audioUnlocked = true;
+    if ('speechSynthesis' in window) {
+      speechSynthesis.resume();
+    }
+  }
+  window.addEventListener('pointerdown', unlockAudio, { once: true });
+
+  function speak(text, cb) {
+    if (!state.sound || !('speechSynthesis' in window)) {
+      if (cb) setTimeout(cb, 0);
+      return;
+    }
+    try {
+      speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(text);
+      u.lang = 'zh-HK'; // 固定廣東話 (香港)
+      if (cantoneseVoice) u.voice = cantoneseVoice;
+      u.rate = 0.85; // 自然語速
+      u.pitch = 1.0;
+      u.volume = 1.0;
+      if (cb) u.onend = cb;
+      speechSynthesis.speak(u);
+    } catch (e) {
+      if (cb) setTimeout(cb, 0);
+    }
+  }
+
+  function shut() {
+    try { if ('speechSynthesis' in window) speechSynthesis.cancel(); } catch(e){}
+  }
+
+  function announce(t) {
+    var l = S('#live');
+    if (l) { l.textContent = ''; setTimeout(function() { l.textContent = t; }, 40); }
+  }
+
+  /* ---- SVG 藝術生成模組 ---- */
+  function P(n) { return Math.round(n * 10) / 10; }
+  function prng(seed) {
+    var s = (seed * 2654435761) % 2147483647;
+    if (s <= 0) s += 2147483646;
+    return function() { s = (s * 48271) % 2147483647; return s / 2147483647; };
+  }
+  var SW = '<svg class="art" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">';
+
+  function swirl(r, cols, n) {
+    var s = '';
+    for (var i = 0; i < n; i++) {
+      var x = r() * 200, y = r() * 200, len = 10 + r() * 26, a = r() * 6.28;
+      var x2 = x + Math.cos(a) * len, y2 = y + Math.sin(a) * len;
+      var cx = (x + x2) / 2 + Math.cos(a + 1.57) * 8, cy = (y + y2) / 2 + Math.sin(a + 1.57) * 8;
+      s += '<path d="M' + P(x) + ' ' + P(y) + 'Q' + P(cx) + ' ' + P(cy) + ' ' + P(x2) + ' ' + P(y2) + '" fill="none" stroke="' + cols[(r() * cols.length) | 0] + '" stroke-width="' + P(1.4 + r() * 2.4) + '" stroke-linecap="round" opacity="0.75"/>';
+    }
+    return s;
+  }
+
+  function cluster(r, cx, cy, rx, ry, n, cols) {
+    var s = '';
+    for (var i = 0; i < n; i++) {
+      var a = r() * 6.28, rad = Math.sqrt(r()) * 0.98;
+      var x = cx + Math.cos(a) * rx * rad, y = cy + Math.sin(a) * ry * rad;
+      var ang = a + 1.57 + (r() - .5) * 1.1, len = 5 + r() * 8;
+      var x2 = x + Math.cos(ang) * len, y2 = y + Math.sin(ang) * len;
+      s += '<path d="M' + P(x) + ' ' + P(y) + 'Q' + P(x2) + ' ' + P(y2) + '" fill="none" stroke="' + cols[(r() * cols.length) | 0] + '" stroke-width="' + P(2 + r() * 2.4) + '" stroke-linecap="round"/>';
+    }
+    return s;
+  }
+
+  function artTree(seed, pal) {
+    pal = pal || {}; var r = prng(seed || 3);
+    var sky = pal.sky || '#1b4f8f', sky2 = pal.sky2 || '#2b6cc0', ground = pal.ground || '#2f7a3f', trunk = pal.trunk || '#6b4423';
+    var leaves = pal.leaves || ['#f2d95c', '#e0b731', '#c8a02c', '#9fc24a', '#7fa83a'];
+    var s = SW + '<rect width="200" height="200" fill="' + sky + '"/>' + swirl(r, [sky2, '#3f86d8', '#123a6e'], 22);
+    s += '<rect y="150" width="200" height="50" fill="' + ground + '"/>';
+    s += '<path d="M100 178 C98 148 94 130 88 114" stroke="' + trunk + '" stroke-width="9" fill="none" stroke-linecap="round"/>';
+    s += '<path d="M100 166 C104 144 110 130 118 118" stroke="' + trunk + '" stroke-width="6" fill="none" stroke-linecap="round"/>';
+    var cl = [[72,86,30,26], [120,78,32,28], [100,112,34,26], [64,122,22,20]];
+    for (var k = 0; k < 4; k++) { s += cluster(r, cl[k][0], cl[k][1], cl[k][2], cl[k][3], 42, leaves); }
+    return s + '</svg>';
+  }
+
+  function artPortrait() {
+    var r = prng(7);
+    var s = SW + '<rect width="200" height="200" fill="#1e4f8f"/>' + swirl(r, ['#2f6fc4', '#3f86d8', '#123a6e'], 30);
+    s += '<path d="M56 200 Q66 138 100 138 Q134 138 144 200 Z" fill="#2f7a3f"/>';
+    s += '<ellipse cx="100" cy="112" rx="33" ry="40" fill="#f0b98a"/>';
+    s += '<path d="M70 120 Q100 176 130 120 Q122 152 100 152 Q78 152 70 120 Z" fill="#c86a2a"/>';
+    s += '<circle cx="89" cy="104" r="3.6" fill="#26323f"/><circle cx="111" cy="104" r="3.6" fill="#26323f"/>';
+    s += '<path d="M52 84 Q100 44 148 84 Z" fill="#e8c05a"/><rect x="44" y="80" width="112" height="13" rx="6.5" fill="#d8ab3c"/>';
+    return s + '</svg>';
+  }
+
+  function artPalette() {
+    var r = prng(5);
+    var s = SW + '<rect width="200" height="200" fill="#20305e"/>' + swirl(r, ['#2f6fc4', '#3f86d8'], 16);
+    s += '<ellipse cx="100" cy="120" rx="66" ry="48" fill="#e8d6a8"/>';
+    var b = [['#f2d95c',78,100,15],['#3f86d8',110,112,14],['#6fb84a',132,126,13],['#e0892b',96,144,13],['#d94f4f',72,130,12]];
+    for (var i = 0; i < b.length; i++) { s += '<circle cx="' + b[i][1] + '" cy="' + b[i][2] + '" r="' + b[i][3] + '" fill="' + b[i][0] + '"/>'; }
+    return s + '</svg>';
+  }
+
+  function artStrokes() {
+    var r = prng(9), s = SW + '<rect width="200" height="200" fill="#f3e6cc"/>';
+    var cols = ['#e0892b', '#f2d95c', '#3f86d8', '#6fb84a', '#d94f4f'];
+    for (var i = 0; i < 8; i++) {
+      var y = 20 + i * 22, d = 'M8 ' + P(y + (r() - .5) * 4);
+      for (var x = 8; x <= 192; x += 16) { d += ' L' + x + ' ' + P(y + Math.sin((x + i * 13) / 17) * 8); }
+      s += '<path d="' + d + '" fill="none" stroke="' + cols[i % cols.length] + '" stroke-width="' + P(4 + r() * 3) + '" stroke-linecap="round"/>';
+    }
+    return s + '</svg>';
+  }
+
+  function artStar() {
+    var r = prng(13);
+    var s = SW + '<rect width="200" height="200" fill="#123a6e"/>' + swirl(r, ['#1e4f8f', '#3f86d8', '#7fb6e8'], 34);
+    for (var i = 0; i < 16; i++) {
+      s += '<circle cx="' + P(10 + r() * 180) + '" cy="' + P(10 + r() * 118) + '" r="' + P(3 + r() * 6) + '" fill="#f7e07a"/>';
+    }
+    return s + '</svg>';
+  }
+
+  /* ---- 圖畫資料 ---- */
+  var IMG = {
+    sp: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Vincent_van_Gogh_-_Self-Portrait_-_Google_Art_Project.jpg/960px-Vincent_van_Gogh_-_Self-Portrait_-_Google_Art_Project.jpg',
+    sf: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Sunflowers_-_Vincent_van_Gogh_%28Munich_version%29.jpg/960px-Sunflowers_-_Vincent_van_Gogh_%28Munich_version%29.jpg',
+    mu: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Vincent_van_Gogh_-_Mulberry_Tree_-_Norton_Simon.jpg/960px-Vincent_van_Gogh_-_Mulberry_Tree_-_Norton_Simon.jpg',
+    ol: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Vincent_van_Gogh_-_The_Olive_Trees_-_Google_Art_Project.jpg/960px-Vincent_van_Gogh_-_The_Olive_Trees_-_Google_Art_Project.jpg',
+    al: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Vincent_van_Gogh_-_Almond_blossom_-_Google_Art_Project.jpg/960px-Vincent_van_Gogh_-_Almond_blossom_-_Google_Art_Project.jpg'
+  };
+
+  var SLIDES = [
+    { t: '梵高係邊個？', b: '梵高係荷蘭嘅名畫家。佢生於 1853 年，一生都好鍾意畫畫。', a: artPortrait, img: IMG.sp, name: '《自畫像》',
+      sp: '梵高係邊個？梵高係荷蘭嘅名畫家。佢生於一八五三年，一生都好鍾意畫畫。' },
+    { t: '佢鍾意鮮艷嘅顏色', b: '梵高最鍾意黃色、藍色同埋綠色，顏色明亮又溫暖。', a: artPalette, img: IMG.sf, name: '《向日葵》',
+      sp: '佢鍾意鮮艷嘅顏色。梵高最鍾意黃色、藍色同埋綠色，顏色明亮又溫暖。' },
+    { t: '佢最愛畫大自然', b: '佢好鍾意畫大樹、樹葉、田野，仲有神秘嘅星空。', a: function(){ return artTree(11); }, img: IMG.mu, name: '《桑樹》',
+      sp: '佢最愛畫大自然。佢好鍾意畫大樹、樹葉、田野，仲有神秘嘅星空。' },
+    { t: '一筆一筆慢慢畫', b: '佢用粗粗地、彎彎地嘅線條，將顏色一層一層疊上去。', a: artStrokes, img: IMG.ol, name: '《橄欖樹》',
+      sp: '一筆一筆慢慢畫。佢用粗粗地、彎彎地嘅線條，將顏色一層一層疊上去。' },
+    { t: '一齊嚟欣賞', b: '今日我們一齊欣賞梵高畫嘅樹葉，感受大自然嘅美！', a: artStar, img: IMG.al, name: '《杏花》',
+      sp: '一齊嚟欣賞！今日我們一齊欣賞梵高畫嘅樹葉，感受大自然嘅美！' }
+  ];
+
+  var WORKS = [
+    { t: '橄欖樹', a: function(){ return artTree(21, { sky:'#1e63b8', sky2:'#4a9de0', ground:'#3f8a4f', leaves:['#dbd84a','#b8c243','#8fbe4a'] }); }, img: IMG.ol,
+      lines: ['樹葉用了黃色同綠色，一筆一筆疊上去。', '樹幹彎彎曲曲，好似喺大風入面搖擺緊。', '睇畫嘅時候，可以試吓深呼吸。'] },
+    { t: '桑樹', a: function(){ return artTree(33, { sky:'#2b6cc0', sky2:'#7fb6e8', ground:'#2f7a3f', leaves:['#9fc24a','#7fa83a','#c8d84a'] }); }, img: IMG.mu,
+      lines: ['整棵樹好似一個圓滾滾嘅球體。', '深綠同淺綠互相交錯，非常有生命力。', '試吓用手指喺空中畫一圈，感受樹嘅形狀。'] },
+    { t: '秋天嘅樹', a: function(){ return artTree(47, { sky:'#e8a33c', sky2:'#f2c95c', ground:'#a86b34', leaves:['#f2d95c','#e0892b','#c86a2a'] }); }, img: IMG.al,
+      lines: ['秋天到了，樹葉轉變成金黃同橙色。', '暖洋洋嘅色彩，令人睇到心情好開心。', '你最鍾意邊種顏色嘅樹葉呢？'] }
+  ];
+
+  /* ---- 介面切換與渲染 ---- */
+  function go(n) {
+    state.scr = n;
+    SA('.screen').forEach(function(s) { s.classList.toggle('on', s.id === 's-' + n); });
+    S('#workOv').classList.remove('on');
+    S('#zoom').classList.remove('on');
+    shut();
+
+    if (n === 'start') enterStart();
+    else if (n === 'who') enterWho();
+    else if (n === 'works') enterWorks();
+    else if (n === 'done') enterDone();
+  }
+
+  function paintArt(box, sl) {
+    if (!box) return;
+    if (sl.img) {
+      box.innerHTML = '<img class="art" alt="' + sl.name + '" src="' + sl.img + '" loading="lazy" referrerpolicy="no-referrer">';
+      var im = box.querySelector('img');
+      im.onerror = function() { box.innerHTML = typeof sl.a === 'function' ? sl.a() : sl.a; };
+    } else {
+      box.innerHTML = typeof sl.a === 'function' ? sl.a() : sl.a;
+    }
+  }
+
+  /* ---- 主頁 ---- */
+  function enterStart() {
+    S('#startArt').innerHTML = artStar();
+    var msg = '名作欣賞：梵高的樹葉。按開始一齊欣賞啦。';
+    announce(msg);
+    speak(msg);
+  }
+
+  /* ---- 認識梵高 ---- */
+  function enterWho() {
+    buildWhoNav();
+    renderWho();
+  }
+
+  function renderWho() {
+    var sl = SLIDES[state.slide];
+    paintArt(S('#whoArt'), sl);
+    S('#whoTitle').textContent = sl.t;
+    S('#whoBody').textContent = sl.b;
+    S('#whoCap').textContent = sl.name + ' · 梵高真跡';
+    S('#whoNext').textContent = (state.slide === SLIDES.length - 1) ? '欣賞樹葉畫 ▶' : '下一頁 ▶';
+    
+    // 更新 Navigation 按鈕狀態
+    SA('#whoNav .stepBtn').forEach(function(b, idx) {
+      b.classList.toggle('on', idx === state.slide);
+    });
+
+    // 更新 Dots
+    var d = S('#whoDots'); d.innerHTML = '';
+    SLIDES.forEach(function(_, i) {
+      var s = document.createElement('span');
+      s.className = 'dot' + (i === state.slide ? ' on' : '');
+      d.appendChild(s);
+    });
+
+    var say = sl.sp || (sl.t + '。' + sl.b);
+    announce(say);
+    speak(say);
+  }
+
+  var SLIDENAMES = ['梵高係邊個', '顏色鮮艷', '大自然', '一筆一筆', '一齊欣賞'];
+  function buildWhoNav() {
+    var nav = S('#whoNav');
+    if (!nav || nav.childElementCount > 0) return;
+    nav.innerHTML = '';
+    SLIDES.forEach(function(sl, i) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'stepBtn';
+      b.setAttribute('aria-label', '第 ' + (i + 1) + ' 頁，' + SLIDENAMES[i]);
+      
+      var ico = document.createElement('span');
+      ico.className = 'ico';
+      paintArt(ico, sl);
+
+      var nm = document.createElement('span');
+      nm.className = 'nm';
+      nm.textContent = (i + 1) + '. ' + SLIDENAMES[i];
+
+      b.appendChild(ico);
+      b.appendChild(nm);
+      b.addEventListener('click', function() {
+        state.slide = i;
+        renderWho();
+      });
+      nav.appendChild(b);
+    });
+  }
+
+  function whoNext() {
+    if (state.slide < SLIDES.length - 1) {
+      state.slide++;
+      renderWho();
+    } else {
+      go('works');
+    }
+  }
+
+  function whoPrev() {
+    if (state.slide > 0) {
+      state.slide--;
+      renderWho();
+    } else {
+      go('start');
+    }
+  }
+
+  /* ---- 欣賞樹葉畫 ---- */
+  function enterWorks() {
+    var box = S('#workCards');
+    if (!box.childElementCount) {
+      WORKS.forEach(function(w, i) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'card';
+        b.setAttribute('aria-label', '睇圖畫：' + w.t);
+        
+        var thumb = document.createElement('span');
+        thumb.className = 'thumb';
+        paintArt(thumb, w);
+
+        b.appendChild(thumb);
+        b.innerHTML += '<span class="cap">' + w.t + '</span>';
+        b.addEventListener('click', function() { openWork(i); });
+        box.appendChild(b);
+      });
+    }
+    var msg = '欣賞梵高嘅樹葉畫。點擊圖畫仔細睇吓啦。';
+    announce(msg);
+    speak(msg);
+  }
+
+  function openWork(i) {
+    var w = WORKS[i];
+    paintArt(S('#ovArt'), w);
+    S('#ovTitle').textContent = w.t;
+    var u = S('#ovLines'); u.innerHTML = '';
+    w.lines.forEach(function(l) {
+      var li = document.createElement('li');
+      li.textContent = '• ' + l;
+      u.appendChild(li);
+    });
+
+    // 綁定放大按鈕
+    S('#ovZoom').onclick = function() {
+      openZoom(w.img || '', w.t + ' · 梵高真跡');
+    };
+
+    S('#workOv').classList.add('on');
+    var txt = w.t + '。' + w.lines.join('。');
+    announce(txt);
+    speak(txt);
+  }
+
+  function closeWork() {
+    S('#workOv').classList.remove('on');
+    shut();
+  }
+
+  /* ---- 放大圖畫 Modal ---- */
+  function openZoom(src, cap) {
+    var z = S('#zoom');
+    var im = S('#zoomImg');
+    if (!src && S('#whoArt img')) src = S('#whoArt img').src;
+    im.src = src;
+    S('#zoomCap').textContent = cap || '梵高真跡';
+    z.classList.add('on');
+    speak('放大圖畫欣賞。');
+  }
+
+  function closeZoom() {
+    S('#zoom').classList.remove('on');
+    shut();
+  }
+
+  /* ---- 完成頁 ---- */
+  function enterDone() {
+    var msg = '你真棒！你已經認識咗梵高，仲欣賞埋佢畫嘅樹葉畫添！';
+    announce(msg);
+    speak(msg);
+  }
+
+  /* ---- 事件監聽綁定 ---- */
+  S('#btnSound').addEventListener('click', function() {
+    state.sound = !state.sound;
+    this.setAttribute('aria-pressed', state.sound ? 'true' : 'false');
+    this.textContent = state.sound ? '🔊 廣東話' : '🔇 靜音';
+    if (!state.sound) shut();
+    else speak('廣東話語音已開啟。');
+  });
+
+  S('#btnHome').addEventListener('click', function() { state.slide = 0; go('start'); });
+  S('#btnStart').addEventListener('click', function() { state.slide = 0; go('who'); });
+
+  SA('[data-go]').forEach(function(b) {
+    b.addEventListener('click', function() { go(b.getAttribute('data-go')); });
+  });
+
+  S('#whoNext').addEventListener('click', whoNext);
+  S('#whoPrev').addEventListener('click', whoPrev);
+  S('#whoZoom').addEventListener('click', function() {
+    var sl = SLIDES[state.slide];
+    openZoom(sl.img, sl.name + ' · 梵高真跡');
+  });
+
+  S('#wGoDone').addEventListener('click', function() { go('done'); });
+  S('#ovClose').addEventListener('click', closeWork);
+  S('#zoomOut').addEventListener('click', closeZoom);
+  S('#again').addEventListener('click', function() { state.slide = 0; go('who'); });
+
+  // 鍵盤無障礙支援
+  window.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      if (S('#zoom').classList.contains('on')) closeZoom();
+      else if (S('#workOv').classList.contains('on')) closeWork();
+      else go('start');
+    }
+  });
+
+  // 初始化啟動
+  enterStart();
+})();
+</script>
+</body>
+</html>
